@@ -93,20 +93,22 @@ function compileJs(options) {
 
 /** Compiles the WebAssembly target. */
 function compileWasm(options) {
-  run("python", [
+  runCommand("python", [
     path.join(emscriptenDirectory, "em++"),
     "shared.bc"
   ].concat(commonOptions).concat([
     "--post-js", options.post,
+    "--pre-js", options.pre,
     "--closure", "1",
     "-s", "EXPORTED_FUNCTIONS=[" + exportedFunctionsArg + "]",
     "-s", "ALLOW_MEMORY_GROWTH=1",
     "-s", "BINARYEN=1",
     "-s", "BINARYEN_METHOD=\"native-wasm\"",
-    "-s", "MODULARIZE_INSTANCE=1",
+    "-s", "MODULARIZE=1",
+    "-s", "MODULARIZE_INSTANCE=0",
     "-s", "EXPORT_NAME=\"Binaryen\"",
     "-o", options.out,
-    "-Oz"
+    "-Oz",
   ]));
 }
 
@@ -114,9 +116,15 @@ console.log("Compiling shared bitcode ...\n");
 compileShared();
 
 console.log("\nCompiling binaryen.js ...\n");
-compileJs({
+// compileJs({
+//   post: path.join(sourceDirectory, "js", "binaryen.js-post.js"),
+//   out: "index.js"
+// });
+
+compileWasm({
   post: path.join(sourceDirectory, "js", "binaryen.js-post.js"),
-  out: "index.js"
+  pre: path.join(sourceDirectory, "js", "binaryen.js-pre.js"),
+  out: "binaryen-wasm.js"
 });
 
 // NOT YET FUNCTIONAL, but possible. Requires some changes to post.js
