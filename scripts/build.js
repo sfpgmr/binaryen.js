@@ -108,7 +108,7 @@ function compileWasm(options) {
     "-s", "MODULARIZE_INSTANCE=0",
     "-s", "EXPORT_NAME=\"Binaryen\"",
     "-o", options.out,
-    "-Oz",
+    "-O0",
   ]));
 }
 
@@ -122,8 +122,8 @@ console.log("\nCompiling binaryen.js ...\n");
 // });
 
 compileWasm({
-  post: path.join(sourceDirectory, "js", "binaryen.js-post.js"),
-  pre: path.join(sourceDirectory, "js", "binaryen.js-pre.js"),
+  post: path.join(projectDirectory,"scripts" ,"binaryen.js-post.js"),
+  pre: path.join(projectDirectory, "scripts" ,"binaryen.js-pre.js"),
   out: "binaryen-wasm.js"
 });
 
