@@ -77,7 +77,7 @@ if (Module['ENVIRONMENT']) {
 } else {
   ENVIRONMENT_IS_WEB = typeof window === 'object';
   ENVIRONMENT_IS_WORKER = typeof importScripts === 'function';
-  ENVIRONMENT_IS_NODE = typeof process === 'object' && typeof require === 'function' && !ENVIRONMENT_IS_WEB && !ENVIRONMENT_IS_WORKER;
+  ENVIRONMENT_IS_NODE = typeof process === 'object' && !ENVIRONMENT_IS_WEB && !ENVIRONMENT_IS_WORKER;
   ENVIRONMENT_IS_SHELL = !ENVIRONMENT_IS_WEB && !ENVIRONMENT_IS_NODE && !ENVIRONMENT_IS_WORKER;
 }
 
@@ -97,6 +97,7 @@ if (ENVIRONMENT_IS_NODE) {
     return binary ? ret : ret.toString();
   };
 
+
   Module['readBinary'] = function readBinary(filename) {
     var ret = Module['read'](filename, true);
     if (!ret.buffer) {
@@ -105,6 +106,7 @@ if (ENVIRONMENT_IS_NODE) {
     assert(ret.buffer);
     return ret;
   };
+  
 
   if (process['argv'].length > 1) {
     Module['thisProgram'] = process['argv'][1].replace(/\\/g, '/');
@@ -1813,7 +1815,7 @@ var ASM_CONSTS = [];
 
 STATIC_BASE = GLOBAL_BASE;
 
-STATICTOP = STATIC_BASE + 106912;
+STATICTOP = STATIC_BASE + 106896;
 /* global initializers */  __ATINIT__.push({ func: function() { __GLOBAL__I_000101() } }, { func: function() { __GLOBAL__sub_I_pass_cpp() } }, { func: function() { __GLOBAL__sub_I_iostream_cpp() } }, { func: function() { __GLOBAL__sub_I_wasm_cpp() } }, { func: function() { __GLOBAL__sub_I_wasm_emscripten_cpp() } }, { func: function() { __GLOBAL__sub_I_threads_cpp() } }, { func: function() { __GLOBAL__sub_I_path_cpp() } }, { func: function() { __GLOBAL__sub_I_TrapMode_cpp() } }, { func: function() { __GLOBAL__sub_I_SSAify_cpp() } }, { func: function() { __GLOBAL__sub_I_SafeHeap_cpp() } }, { func: function() { __GLOBAL__sub_I_RelooperJumpThreading_cpp() } }, { func: function() { __GLOBAL__sub_I_Precompute_cpp() } }, { func: function() { __GLOBAL__sub_I_binaryen_c_cpp() } }, { func: function() { __GLOBAL__sub_I_OptimizeInstructions_cpp() } }, { func: function() { __GLOBAL__sub_I_Metrics_cpp() } }, { func: function() { __GLOBAL__sub_I_LogExecution_cpp() } }, { func: function() { __GLOBAL__sub_I_LegalizeJSInterface_cpp() } }, { func: function() { __GLOBAL__sub_I_InstrumentMemory_cpp() } }, { func: function() { __GLOBAL__sub_I_InstrumentLocals_cpp() } }, { func: function() { __GLOBAL__sub_I_I64ToI32Lowering_cpp() } }, { func: function() { __GLOBAL__sub_I_simple_ast_cpp() } }, { func: function() { __GLOBAL__sub_I_parser_cpp() } }, { func: function() { __GLOBAL__sub_I_optimizer_shared_cpp() } }, { func: function() { __GLOBAL__sub_I_shared_constants_cpp() } });
 
 
@@ -1822,7 +1824,7 @@ STATICTOP = STATIC_BASE + 106912;
 
 
 
-var STATIC_BUMP = 106912;
+var STATIC_BUMP = 106896;
 Module["STATIC_BASE"] = STATIC_BASE;
 Module["STATIC_BUMP"] = STATIC_BUMP;
 
@@ -4233,9 +4235,6 @@ function copyTempDouble(ptr) {
         }
         return stream;
       },close:function (stream) {
-        if (FS.isClosed(stream)) {
-          throw new FS.ErrnoError(ERRNO_CODES.EBADF);
-        }
         if (stream.getdents) stream.getdents = null; // free readdir state
         try {
           if (stream.stream_ops.close) {
@@ -4246,13 +4245,7 @@ function copyTempDouble(ptr) {
         } finally {
           FS.closeStream(stream.fd);
         }
-        stream.fd = null;
-      },isClosed:function (stream) {
-        return stream.fd === null;
       },llseek:function (stream, offset, whence) {
-        if (FS.isClosed(stream)) {
-          throw new FS.ErrnoError(ERRNO_CODES.EBADF);
-        }
         if (!stream.seekable || !stream.stream_ops.llseek) {
           throw new FS.ErrnoError(ERRNO_CODES.ESPIPE);
         }
@@ -4262,9 +4255,6 @@ function copyTempDouble(ptr) {
       },read:function (stream, buffer, offset, length, position) {
         if (length < 0 || position < 0) {
           throw new FS.ErrnoError(ERRNO_CODES.EINVAL);
-        }
-        if (FS.isClosed(stream)) {
-          throw new FS.ErrnoError(ERRNO_CODES.EBADF);
         }
         if ((stream.flags & 2097155) === 1) {
           throw new FS.ErrnoError(ERRNO_CODES.EBADF);
@@ -4287,9 +4277,6 @@ function copyTempDouble(ptr) {
       },write:function (stream, buffer, offset, length, position, canOwn) {
         if (length < 0 || position < 0) {
           throw new FS.ErrnoError(ERRNO_CODES.EINVAL);
-        }
-        if (FS.isClosed(stream)) {
-          throw new FS.ErrnoError(ERRNO_CODES.EBADF);
         }
         if ((stream.flags & 2097155) === 0) {
           throw new FS.ErrnoError(ERRNO_CODES.EBADF);
@@ -4319,9 +4306,6 @@ function copyTempDouble(ptr) {
         }
         return bytesWritten;
       },allocate:function (stream, offset, length) {
-        if (FS.isClosed(stream)) {
-          throw new FS.ErrnoError(ERRNO_CODES.EBADF);
-        }
         if (offset < 0 || length <= 0) {
           throw new FS.ErrnoError(ERRNO_CODES.EINVAL);
         }
@@ -5292,13 +5276,6 @@ function copyTempDouble(ptr) {
         case 21523: {
           // TODO: in theory we should write to the winsize struct that gets
           // passed in, but for now musl doesn't read anything on it
-          if (!stream.tty) return -ERRNO_CODES.ENOTTY;
-          return 0;
-        }
-        case 21524: {
-          // TODO: technically, this ioctl call should change the window size.
-          // but, since emscripten doesn't have any concept of a terminal window
-          // yet, we'll just silently throw it away as we do TIOCGWINSZ
           if (!stream.tty) return -ERRNO_CODES.ENOTTY;
           return 0;
         }
