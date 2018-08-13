@@ -117,6 +117,11 @@ Module['PromoteFloat32'] = Module['_BinaryenPromoteFloat32']();
 Module['DemoteFloat64'] = Module['_BinaryenDemoteFloat64']();
 Module['ReinterpretInt32'] = Module['_BinaryenReinterpretInt32']();
 Module['ReinterpretInt64'] = Module['_BinaryenReinterpretInt64']();
+Module['ExtendS8Int32'] = Module['_BinaryenExtendS8Int32']();
+Module['ExtendS16Int32'] = Module['_BinaryenExtendS16Int32']();
+Module['ExtendS8Int64'] = Module['_BinaryenExtendS8Int64']();
+Module['ExtendS16Int64'] = Module['_BinaryenExtendS16Int64']();
+Module['ExtendS32Int64'] = Module['_BinaryenExtendS32Int64']();
 Module['AddInt32'] = Module['_BinaryenAddInt32']();
 Module['SubInt32'] = Module['_BinaryenSubInt32']();
 Module['MulInt32'] = Module['_BinaryenMulInt32']();
@@ -350,6 +355,12 @@ Module['Module'] = function(module) {
     },
     'reinterpret': function(value) {
       return Module['_BinaryenUnary'](module, Module['ReinterpretFloat32'], value);
+    },
+    'extend8_s': function(value) {
+      return Module['_BinaryenUnary'](module, Module['ExtendS8Int32'], value);
+    },
+    'extend16_s': function(value) {
+      return Module['_BinaryenUnary'](module, Module['ExtendS16Int32'], value);
     },
     'wrap': function(value) {
       return Module['_BinaryenUnary'](module, Module['WrapInt64'], value);
@@ -591,6 +602,15 @@ Module['Module'] = function(module) {
     },
     'reinterpret': function(value) {
       return Module['_BinaryenUnary'](module, Module['ReinterpretFloat64'], value);
+    },
+    'extend8_s': function(value) {
+      return Module['_BinaryenUnary'](module, Module['ExtendS8Int64'], value);
+    },
+    'extend16_s': function(value) {
+      return Module['_BinaryenUnary'](module, Module['ExtendS16Int64'], value);
+    },
+    'extend32_s': function(value) {
+      return Module['_BinaryenUnary'](module, Module['ExtendS32Int64'], value);
     },
     'extend_s': function(value) {
       return Module['_BinaryenUnary'](module, Module['ExtendSInt32'], value);
@@ -1034,6 +1054,11 @@ Module['Module'] = function(module) {
                                                            i32sToStack(paramTypes), paramTypes.length);
     });
   };
+  this['removeFunctionType'] = function(name) {
+    return preserveStack(function () {
+      return Module['_BinaryenRemoveFunctionType'](module, strToStack(name));
+    });
+  };
   this['addFunction'] = function(name, functionType, varTypes, body) {
     return preserveStack(function() {
       return Module['_BinaryenAddFunction'](module, strToStack(name), functionType, i32sToStack(varTypes), varTypes.length, body);
@@ -1140,19 +1165,19 @@ Module['Module'] = function(module) {
     return Module['_BinaryenSetStart'](module, start);
   };
   this['emitText'] = function() {
-    var old = Module['print'];
+    var old = out;
     var ret = '';
-    Module['print'] = function(x) { ret += x + '\n' };
+    out = function(x) { ret += x + '\n' };
     Module['_BinaryenModulePrint'](module);
-    Module['print'] = old;
+    out = old;
     return ret;
   };
   this['emitAsmjs'] = function() {
-    var old = Module['print'];
+    var old = out;
     var ret = '';
-    Module['print'] = function(x) { ret += x + '\n' };
+    out = function(x) { ret += x + '\n' };
     Module['_BinaryenModulePrintAsmjs'](module);
-    Module['print'] = old;
+    out = old;
     return ret;
   };
   this['validate'] = function() {
@@ -1527,11 +1552,11 @@ Module['emitText'] = function(expr) {
   if (typeof expr === 'object') {
     return expr.emitText();
   }
-  var old = Module['print'];
+  var old = out;
   var ret = '';
-  Module['print'] = function(x) { ret += x + '\n' };
+  out = function(x) { ret += x + '\n' };
   Module['_BinaryenExpressionPrint'](expr);
-  Module['print'] = old;
+  out = old;
   return ret;
 };
 
@@ -1585,5 +1610,13 @@ Module['setDebugInfo'] = function(on) {
 // Enables or disables C-API tracing
 Module['setAPITracing'] = function(on) {
   return Module['_BinaryenSetAPITracing'](on);
+};
+
+// Additional customizations
+
+Module['exit'] = function(status) {
+  // Instead of exiting silently on errors, always show an error with
+  // a stack trace, for debuggability.
+  if (status != 0) throw new Error('exiting due to error: ' + status);
 };
 }
