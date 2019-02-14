@@ -47,9 +47,9 @@ declare module binaryen {
     load8_u(offset: number, align: number, ptr: Expression): Expression;
     load16_s(offset: number, align: number, ptr: Expression): Expression;
     load16_u(offset: number, align: number, ptr: Expression): Expression;
-    store(offset: number, align: number, ptr: Expression, value: Expression): Expression;
-    store8(offset: number, align: number, ptr: Expression, value: Expression): Expression;
-    store16(offset: number, align: number, ptr: Expression, value: Expression): Expression;
+    store(offset: number, align: number, ptr: Expression, value: Expression): Statement;
+    store8(offset: number, align: number, ptr: Expression, value: Expression): Statement;
+    store16(offset: number, align: number, ptr: Expression, value: Expression): Statement;
     const(value: number): Expression;
     clz(value: Expression): Expression;
     ctz(value: Expression): Expression;
@@ -94,9 +94,9 @@ declare module binaryen {
       load(offset: number, ptr: Expression): Expression;
       load8_u(offset: number, ptr: Expression): Expression;
       load16_u(offset: number, ptr: Expression): Expression;
-      store(offset: number, ptr: Expression, value: Expression): Expression;
-      store8(offset: number, ptr: Expression, value: Expression): Expression;
-      store16(offset: number, ptr: Expression, value: Expression): Expression;
+      store(offset: number, ptr: Expression, value: Expression): Statement;
+      store8(offset: number, ptr: Expression, value: Expression): Statement;
+      store16(offset: number, ptr: Expression, value: Expression): Statement;
       rmw: {
         add(offset: number, ptr: Expression, value: Expression): Expression;
         sub(offset: number, ptr: Expression, value: Expression): Expression;
@@ -136,10 +136,10 @@ declare module binaryen {
     load16_u(offset: number, align: number, ptr: Expression): Expression;
     load32_s(offset: number, align: number, ptr: Expression): Expression;
     load32_u(offset: number, align: number, ptr: Expression): Expression;
-    store(offset: number, align: number, ptr: Expression, value: Expression): Expression;
-    store8(offset: number, align: number, ptr: Expression, value: Expression): Expression;
-    store16(offset: number, align: number, ptr: Expression, value: Expression): Expression;
-    store32(offset: number, align: number, ptr: Expression, value: Expression): Expression;
+    store(offset: number, align: number, ptr: Expression, value: Expression): Statement;
+    store8(offset: number, align: number, ptr: Expression, value: Expression): Statement;
+    store16(offset: number, align: number, ptr: Expression, value: Expression): Statement;
+    store32(offset: number, align: number, ptr: Expression, value: Expression): Statement;
     const(low: number, high: number): Expression;
     clz(value: Expression): Expression;
     ctz(value: Expression): Expression;
@@ -186,10 +186,10 @@ declare module binaryen {
       load8_u(offset: number, ptr: Expression): Expression;
       load16_u(offset: number, ptr: Expression): Expression;
       load32_u(offset: number, ptr: Expression): Expression;
-      store(offset: number, ptr: Expression, value: Expression): Expression;
-      store8(offset: number, ptr: Expression, value: Expression): Expression;
-      store16(offset: number, ptr: Expression, value: Expression): Expression;
-      store32(offset: number, ptr: Expression, value: Expression): Expression;
+      store(offset: number, ptr: Expression, value: Expression): Statement;
+      store8(offset: number, ptr: Expression, value: Expression): Statement;
+      store16(offset: number, ptr: Expression, value: Expression): Statement;
+      store32(offset: number, ptr: Expression, value: Expression): Statement;
       rmw: {
         add(offset: number, ptr: Expression, value: Expression): Expression;
         sub(offset: number, ptr: Expression, value: Expression): Expression;
@@ -232,7 +232,7 @@ declare module binaryen {
 
   interface F32Operations {
     load(offset: number, align: number, ptr: Expression): Expression;
-    store(offset: number, align: number, ptr: Expression, value: Expression): Expression;
+    store(offset: number, align: number, ptr: Expression, value: Expression): Statement;
     const(value: number): Expression;
     const_bits(value: number): Expression;
     neg(value: Expression): Expression;
@@ -269,7 +269,7 @@ declare module binaryen {
 
   interface F64Operations {
     load(offset: number, align: number, ptr: Expression): Expression;
-    store(offset: number, align: number, ptr: Expression, value: Expression): Expression;
+    store(offset: number, align: number, ptr: Expression, value: Expression): Statement;
     const(value: number): Expression;
     const_bits(low: number, high: number): Expression;
     neg(value: Expression): Expression;
@@ -314,7 +314,11 @@ declare module binaryen {
     sourceMap: string | null;
   }
 
+  function wrapModule(ptr: number): Module;
+
   class Module {
+    readonly ptr: number;
+    constructor();
 
     addFunctionType(name: string, resultType: Type, paramTypes: Type[]): FunctionType;
     getFunctionTypeBySignature(resultType: Type, paramTypes: Type[]): FunctionType;
@@ -587,11 +591,12 @@ declare module binaryen {
   function setAPITracing(on: boolean): void;
 
   class Relooper {
+    constructor(module: Module);
     addBlock(expression: Expression): RelooperBlock;
     addBranch(from: RelooperBlock, to: RelooperBlock, condition: Expression, code: Expression): void;
     addBlockWithSwitch(code: Expression, condition: Expression): RelooperBlock;
     addBranchForSwitch(from: RelooperBlock, to: RelooperBlock, indexes: number[], code: Expression): void;
-    renderAndDispose(entry: RelooperBlock, labelHelper: number, module: Module): Expression;
+    renderAndDispose(entry: RelooperBlock, labelHelper: number): Expression;
   }
 
   // These are actually pointers internally
